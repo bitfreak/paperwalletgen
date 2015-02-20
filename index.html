@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<!-- Code for this site, if not copyright otherwise, is licensed under MIT license (http://opensource.org/licenses/MIT). -->
+<html lang="pl" manifest="/cache.manifest">
+<head>
+  <meta charset="utf-8">
+  <title>Generator adresów bitcoin</title>
+  <meta name="description" content="Generuj bezpieczne adresy bitcoin offline. Generator losowych adresów bitcoin.">
+  <meta http-equiv="cache-control" content="no-cache" >
+  
+  <link rel="shortcut icon" href="favicon.ico">
+  
+  <!-- skeleton -->
+  <link rel="stylesheet" href="css/skeleton.css">
+  <!-- custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/print.css" media="print">
+  <!-- jQuery UI -->
+  <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.10.3.custom.min.css">
+
+  <!-- crypto.js, sha256.js, ripemd160.js -->
+  <script type="text/javascript" src="js/crypto.js" ></script>
+  <!-- jsbn.js, jsbn2.js -->
+  <script type="text/javascript" src="js/jsbn2.js" ></script>
+  <!-- prng4.js, rng.js, ec.js, sec.js, eventemitter.js, bitcoin.js, util.js, base58.js, address.js, ecdsa.js, eckey.js -->
+  <script type="text/javascript" src="js/bitcoin.js" ></script>
+
+  <!-- jQuery -->
+  <script type="text/javascript" src="js/jquery-1.9.1.js" ></script>
+  <!-- jQuery UI -->
+  <script type="text/javascript" src="js/jquery-ui-1.10.3.custom.min.js" ></script>
+  <!-- jQuery plugin - knob -->
+  <script type="text/javascript" src="js/jquery.knob.js" ></script>
+  <!-- jQuery plugin for QR codes -->
+  <script type="text/javascript" src="js/jquery.qrcode-0.7.0.min.js" ></script>
+
+  <!-- preload HTML5 workers to be available offline -->
+  <script type="text/javascript" src="js/worker.js" ></script>
+
+</head>
+<body>
+<div id="main-content">
+  <div class="container" >
+    <div class="sixteen columns">
+        <div id="tabs-results">
+          <div id="options-buttons">
+            <button id="print-button">Drukuj</button>
+            <button id="back-to-homepage">Powrót</button>
+          </div>
+          <p id="tabs-desc"> Pokaż wygenerowany adres jako: </p>
+          <ul>
+            <li><a href="#tabs-1">Indywidualny adres</a></li>
+            <li><a href="#tabs-2">Bilony do druku</a></li>
+            <li><a href="#tabs-3">Format bulk</a></li>
+          </ul>
+          <p id="tabs-post-desc"> Te kody QR są odporne na zniszczenia, będą działały nawet w momencie zniszczenia ich części. Wszystkie klucze prywatne są udostępniane w formacie Wallet Import Format (WIF).</p>
+
+          <div id="tabs-1" class="clearfix">
+            <div id="individual-addresses"></div>
+          </div>
+          <div id="tabs-2" class="clearfix">
+            <div id="bills">
+              <div class="clearfix" id="bill-buttons">
+                <p class="remove-bottom" id="select-bills-design"> Wybierz swój preferowany projekt: </p>
+                <span>
+                  <button id="button-green" class="selected">Zielony</button>
+                  <button id="button-yellow">Żółty</button>
+                  <button id="button-purple">Satoshi</button>
+                  <button id="button-gray">Szary</button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div id="tabs-3" class="clearfix">
+            <div id="update-bulk-div">
+              <button id="update-bulk">Aktualizuj</button>
+              <input id="bulk-format-input" type="text" value='  {"address", "key"},'>
+              <div> <p> Format: </p> </div>
+            </div>
+            <textarea id="results-textarea"> </textarea>
+          </div>
+        </div>
+        <div id="site-about">
+          <div class="site-navigation-buttons">
+            <button class="site-back-button">Powrót</button>
+          </div>
+          <div class="site-navigation-buttons-bottom">
+            <button class="site-back-button">Powrót</button>
+          </div>
+          <h2>Dlaczego akurat ten generator?</h2>
+          <p>Ta aplikacja została stworzona, aby udostępnić użytkownikom Bitcoin krewoanie <span class="b">bezpiecznych adresów offline</span>.
+          </p>
+          <p>Większość z ogólnie dostępnych rozwiązań służących do generowania adresów bitcoin nie korzysta z prawdziwie losowego źródła doboru liczb w celu stworzenia kluczy prywatnych i zamiast tego oferuje pseudolosowe liczby, które wystawiają użytkowników na ryzyko związane z bezpieczeństwem.
+          </p>
+          <p>Ta aplikacja <span class="b">rozwiązuje ten problem</span> poprzez generowanie losowych liczb na podstawie ruchu myszki użytkownika lub przypadkowych dotknięć palcem na wybranym urządzeniu mobilnym.
+          </p>
+          <h2>Czym jest adres offline?</h2>
+          <p>Adres offline jest adresem publicznym, którego klucz prywatny nigdy przedtem nie istniał na urządzeniu podłączonym do internetu. 
+          </p>
+          <p class="remove-bottom">Obecnie komputery mogą być atakowane na wiele różnych sposobów. Nie przechowując adresu na urządzeniu podłączonym do internetu, użytkownik może być pewny, że nie istnieje możliwość skradzenia adresu. Daltego przed utworzeniem adresu bitcoin za pomocą tej aplikacji, należy odłączyć urządzenia od internetu, lub pobrać plik .html dostępny w sekcji download i uruchomić go we własnej przeglądarce.
+          </p>
+          <p>Adresy offline mogą zostać użyte jako <span class="i">konta oszczędnościowe Bitcoin</span> - użytkownik może przesłać bitcoiny na swój adres, zachowując swój klucz prywatny offline.
+          </p>
+          <a name="security-risk"></a>
+          <h2 id="securityrisk">Istnieje poważne ryzyko związane z bezpieczeństwem śrdoków podczas generowania kluczy prywatnych przy użyciu niskiego stopnia losowo wybranych liczb!</h2>
+          <div class="prominent">
+          <p>Istnieje istotny problem związany z bezpieczeństwem środków podczas generowania kluczy prywatnych i odpowiadających im adresom przy wykorzystaniu <a href="https://en.wikipedia.org/wiki/Pseudorandomness#Cryptography" target='blank'>pseudolosowych liczb</a>.
+          </p>
+          <p class="remove-bottom">Aby mieć pewność, że Twoje bitcoiny są bezpieczne, należy przechowywać je na adresie, który został stworzony przy użyciu <span class="b">prawdziwie losowego</span> klucza prywatnego.
+          </p>
+          <p>Kluczem prywatnym jest duża losowa liczba. To, co sprawia, że jest on bezpieczny jest fakt, iż trudno ją odgadnąć, ponieważ istnieje niewyobrażalnie duż liczba ważnych kluczy prywatnych. Szanse, że ktoś inny odgadnie Twój klucz prywatny są bardzo niewielkie (ktoś taki mógłby wykorzystać wszystkie komputery świata przez długość swojego życia, a szanse na trafienie Twojego klucza prywatnego byłyby nadal nikłe).
+          </p>
+          <p class="remove-bottom"><span class="b">Problemy</span> pojawiają się dopiery w momencie gdy Twój klucz prywatny nie jest w rzeczywistości losowy.
+          </p>
+          <p class="remove-bottom">Jeśli utworzysz swój klucz prywatny korzystając z pseudolosowych liczb (większość dzisiejszych portfeli nadal używa pseudolosowych liczb, mimo, iż specjaliści od zabezpieczeń stanowczo tego odradzają), jedna małą część klucza jest losowa, podczas gdy reszta jest wygenerowana komputerowo na podstawie tej małej części, któa nie jest losowa. W rezultacie tylko mała, ograniczona ilość wszystkich możliwych ważnych kluczy prywatnych może zostać wygenerowana w ten sposób. 
+          </p>
+          <p>Ktoś może spróbować wygenerować wszystkie prywatne klucze z tego małego podzbioru kluczy prywatnych, i mógłby to zrobić stosunkowo szybko (w przeciągu kilku dni), po czym mógłby wydać bitcoiny zgromadzone na adresach przyporządkowanych do tych kluczy prywatnych.
+          </p>
+          <p>Ta aplikacja nie jest podatna na tego typu problemy,ponieważ wszystkie 256 bitów potrzebnych na wykreowanie każdego klucza prywatnego są stworzone na podstawie losowych liczb wygenerowanych na podstawie chaotycznych ruchów myszki lub dotknięć na wybranym urządzeniu mobilnym. Jednakowoż wygenerowane klucze prywatne nie należą do żadnego limitowanego zestawu kluczy prywatnych, co sprawia, że są tak bezpieczne jak to tylko możliwe.
+          </p>
+          <p class="remove-bottom smaller">
+          Istnieje <span class="b">115792089237316195423570985008687907852837564279074904382605163141518161494337</span> możliwych kluczy prywatnych. Ta aplikacja może wygenerować <span class="b">jakikolwiek z tych kluczy prywatnych</span>.
+          </p>
+          <p class="remove-bottom smaller">
+          Jeśli korzystasz z kluczy prywatnych wygenerowanych ze standardowych pseudolosowych sekwencji liczb wygenerowanych za pomocą takich języków programowania jak C lub C++, całkowita możliwa liczba prywatnych kluczy, które mogą zostać wygenerowane w ten sposób wynosi: <span class="b">4294967296</span> (jeśli korzystasz z programów napisanych w jezyku Java, ta liczba wynosi: <span class="b">281474976710656</span>).
+          </p>
+          <p class="smaller">Im większa ilość możliwych kluczy prywatnych z których został stworzony Twój klucz, tym mniejsza szansa, że kotś wygeneruje Twój klucz prywatny.
+          </p>
+          <p class="remove-bottom smaller">
+          Prawdziwie losowe liczby nie mogą być wygenerowane w ramach programu, ponieważ nie ma możliwości, aby program rzucił fizyczną kostką, gdyż działa według ściśle określonych procedur. Dlatego większość aplikacji korzysta z pseudolosowych liczb wygenerowanych przy wykorzystaniu takich algorytmów jak <a href="https://en.wikipedia.org/wiki/Linear_congruential_generator" target='blank'>LDG</a>, które są matematycznymi równaniami definiującymi w jaki sposób wygenerować następne pseudolosowe liczby na podstawie poprzedniej pseudolosowej liczby (przy czym te równania są powszechnie znane).
+          </p>
+          <p class="smaller">Prawdziwie losowe liczby powinny być dostarczone do programu. To dlatego ta aplikacja korzysta z danych pochodzących z losowych ruchów samego użytkownika w celu zapewnienia prawdziwej losowości. Kropki rozpościerające się po całym ekranie reprezentują rzeczywiste dane pochodzące od ruchów myszki użytkownika, na podstawie których generowane są losowe klucze prywatne.
+          </p>
+          <p class="remove-bottom">Pseudolosowe liczby nie powinny być wykorzystywane w ramach aplikacji, w których zachowanie odpowiedniego bezpieczeństwa jest najważniejsze. Zerknij na <a href="https://en.wikipedia.org/wiki/Pseudorandomness#Cryptography" target='blank'>to</a> wytłumaczenie.
+          </p>
+          <p>Jednak, większość dzisiejszych portfeli bitcoin nadal korzysta z pseudolosowych liczb. Jeśli Twój ulubiony portfel bitcoin nie generuje bezpiecznych adresów (sprawdź ich stronę, aby dowiedzieć się czy istnieje wzmianka o ruchach myszką lub innych sposobach na wprowadzenie ludzkiego pierwiastka przypadkowości), możesz skontaktować się z administracją w celu wytłumaczenia występującego ryzyka bezpieczeństwa. W międzyczasie, możesz wygenerować Twój własny adres, przy wykorzystaniu tej aplikacji i zaimportować go do swojego portfela bitcoin.
+          </p>
+          </div>
+          <h2 id="othersecuritymechanisms">Inne mechanizmy bezpieczeństwa</h2>
+          <ul>
+            <li> Ta aplikacja generuje prywatne klucze w ramach Twojej przeglądarki, a nie na naszych serwerach. Twoje klucze prywatneg nigdy nie opuszczą Twojego komputera. </li>
+            <li> Ta aplikacja ostrzeże Cię, jeśli pracujesz w trybie online podczas generowania adresów. </li>
+            <li> Ta aplikacja nie przechowuje cookies. </li>
+            <li> Ta aplikacja nie zawiera żadnego zewnętrznego kodu JavaScript. Żadnych reklam ani kodów śledzących ruch na stronie. </li>
+          </ul>
+          <h2 id="howtobemoresecure">Jak zadbać o bezpieczeństwo?</h2>
+          <p>Jeśli szukasz <span class="b">skrajnego podejścia</span>:
+          </p>
+          <ol>
+            <li> Pobierz <a href="https://pl.wikipedia.org/wiki/Live_CD" target='blank'>live disc</a> i porównaj sumę kontrolną do oryginalnego źródła. </li>
+            <li> Uruchom swoją maszynę z live disc.</li>
+            <li> Załaduj aplikację.</li>
+            <li> Odłącz urządzenie od internetu (odłącz wszystkie kable sieciowe, wyłącz WiFi oraz Bluetooth oraz włącz tryb samolotowy jeśli takowy posiadasz).</li>
+            <li> Wygeneruj adresy i wydrukuj je.</li>
+            <li> Zrestartuj swoją maszynę.</li>
+          </ol>
+          <p><span class="b">Korzystanie z obecnego systemu operacyjnego:</span>
+          </p>
+          <ul>
+            <li> Upewnij się, że masz zainstalowaną aktualną wersję programu antywirusowego.</li>
+            <li> Upewnij się, że Twój system operacyjny nie jest (i nigdy nie był) zainfekowany.</li>
+          </ul>
+          <p><span class="b">Inne ważne aspekty:</span>
+          </p>
+          <ul>
+            <li> Korzystaj z własnego połączenia internetowego, które nie jest współdzielone z innymi użytkownikami.</li>
+            <li> Upewnij się, że jesteś za bezpieczną zaporą firewall.</li>
+            <li> Korzystaj z własnego prywatnego urządzenia.</li>
+            <li> Staraj się korzystać jedynie z programów typu open source.</li>
+            <li> Drukuj kody QR/klucze/bilony zamiast je kopiować (niektóre wirusy kradną podręczną pamięć użytkowników).</li>
+          </ul>
+          <h2>Dlaczego otrzymuję dwa adresy przypadające na każdy klucz prywatny zaimportowany do mojego portfela?</h2>
+          <p class="remove-bottom">Na każdy klucz prywatny przypada jeden klucz publiczny, który jest wykorzystywany do określenia adresu publicznego.
+          </p>
+          <p>Jednak, istnieją dwa standardowe formaty zapisywania kluczy publicznych, format skompresowany i nieskompresowany (z matematycznej perspektywy są to dwa różne sposoby definiowania tej samej rzeczy). Odkąd oprogramowanie Twojego portfela nie wie który format został wykorzystany, wykorzystuje oba z nich. Ta strona generuje nieskompresowany format kluczy publicznych, aby zapewnić kompatybilność z innymi klientami.
+          </p>
+          <h2>Czy ta aplikacja jest lepsza od innych?</h2>
+          <p class="remove-bottom">Inne aplikacje często nie oferują losowego generowania adresów bitcoin.
+          </p>
+          <p>Ta aplikacja powstała w celu stworzenia alternatywy dla innych tego typu stron oraz celach edukacyjnych, aby uwidocznić proces oraz mechanizmy tworzenia nowych portfeli bitcoin.
+          </p>
+          <h2>Gdzie mogę kierować pytania?</h2>
+          <p class="remove-bottom">Wszelkie pytania i wątpliwości prosimy kierować na: <a href="https://bitcoinforum.pl/">bitcoinforum.pl</a>.
+          </p>
+        </div>
+      <div class="two-thirds column alpha">
+        <div class="main-left">
+          <div id="input-div">
+            <div id="button-set-div">
+              <p class="remove-bottom">
+                Generuj
+                <span id="button-set">
+                  <button id="button-1" class="not-selected">1</button>
+                  <button id="button-10" class="not-selected">10</button>
+                  <button id="button-100" class="not-selected">100</button>
+                  <button id="button-1000" class="not-selected">1000</button>
+                </span>
+                adresów Bitcoin.
+              </p>
+            </div>
+            <div id="input-description-div">
+              <p class="remove-bottom">
+                <span id="user-instruction">Poruszaj myszką, aby dodać przypadkowości</span> i wygenerować <span class="b">adres bitcoin</span>.
+              </p>
+            </div>
+            <div id="knob-div">
+              <input id="knob" data-linecap=round data-readOnly=true data-angleOffset=-125 data-angleArc=250
+                data-width="99" data-height="82"  data-fgColor="#186C9D" data-bgColor="#ddd" data-thickness=.3 value="0">
+              <p class="remove-bottom" id="randomness-p"> Przypadkowość </p>
+            </div>
+            <div id="generate-button-div">
+              <button>Kliknij, aby wygenerować adres</button>
+            </div>
+            <canvas id="mouse-canvas">
+              <p>Niestety Twoja przeglądarka nie jest obecnie wspierana. Prosimy skorzystać z jednej ze wspieranych przedlądarek.</p>
+              <p>Wspierane przedlądarki: <a href="http://www.opera.com">Opera</a>, <a href="http://www.mozilla.com">Firefox</a>,
+                <a href="http://www.apple.com/safari">Safari</a>, and <a href="http://www.konqueror.org">Konqueror</a>.
+              </p>
+            </canvas>
+          </div>  
+          <div id="disabled-add-this-buttons">
+            <a href="/" id="load-add-this"><p class="remove-bottom">Kliknij, aby włączyć</p></a>
+          </div>
+        </div>
+      </div>
+      <div class="one-third column omega main-right">
+        <div id="navigation-buttons">
+          <button id="about-button">Do czego służy to narzędzie?</button>
+        </div>
+        <ul>
+          <li>
+            <h2> Bezpieczny generator adresów Bitcoin offline. </h2>
+            <div class="li-explanation">
+              <p>Co jeśli <span class="b">ukradniemy</span> Twój klucz prywatny? </p>
+              <p>Nie możemy, ta strona <span class="b">przestrzega</span> przed generowaniem adresów Bitcoin w trybie online, podczas gdy użytkownik jest podłączony do internetu. </p>
+              <p>Wystarczy załadować tę stronę, <span class="b">odłączyć</span> internet i wygenerować swój adres. </p>
+            </div>
+          </li>
+          <li>
+            <h2> Zachowaj bezpieczeństwo! </h2>
+            <div class="li-explanation">
+              <p>Aby zachować bezpieczeństwo (na wypadek, gdy Twój komputer jest zainfekowany) korzystaj z tej strony za pośrednictwem <a href="https://pl.wikipedia.org/wiki/Live_CD" target='blank'><span class="b">live disc</span></a>. </p>
+              <p>Na obecnie istniejącym systemie operacyjnym wydrukuj klucze zamiast je kopiować (niektóre wirusy kradną zawartość pamięci podręcznej). </p>
+            </div>
+          </li>
+          <li> <a href="/?site=about#security-risk" class="no-underline">
+            <h2> Prawdziwie losowy klucz prywatny! </h2>
+            <div class="li-explanation">
+              <p>Losowe liczby <span class="b">nie mogą</span> zostać wygenerowane w ramach komputera, a pseudolosowa liczba może być z łatwością <span class="force-link-look">przewidziana</span>.</p>
+              <p>Klucze które nie są wygenerowane losowo, mogą zostać łatwo odtworzone, a bitcoiny skradzione.</p>
+              <p>Losowość i przypadkowość wygenerowanego klucza powinna być zapewniona <span class="b">za sprawą człowieka</span>.</p>
+              <p>Kropki rozpościerające się po całym ekranie reprezentują rzeczywiste dane pochodzące od ruchów myszki użytkownika, na podstawie których generowane są losowe klucze prywatne.</p>
+            </div>
+            </a>
+          </li>
+          <li>
+            <h2> Projekt o kodzie otwartoźródłowym. </h2>
+            <div class="li-explanation">
+             <p>Ta aplikacja jest otwartoźródłowa. Każdy może pobrać i sprawdzić kod pobierając go na <a href="https://github.com/bitfreak/paperwalletgen" target='blank'><span class="b">GitHub</span></a> i uruchamiając go offline na własnej przeglądarce.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<div id="dialog-confirm" title="You're still online!">
+  <span class="ui-icon ui-icon-alert" style="float:left; margin: 3px 10px 20px 0;"></span>
+  <div style="padding-left: 25px;">
+    <p>Zadbaj o odpowiednie bezpieczeństwo swoich środków. <span class="b">Stwórz portfel w trybie offline!</span> </p>
+    <p>Adresy offline nie powinny być <span class="b">nigdy</span> generowane i przechowywane na urządzeniach podłączonych do internetu! </p>
+    <p>Prosimy o kliknięcie przycisku powrót, odłączenie kabla sieciowego i Wi-Fi (lub włączenie trybu samolotowego). </p>
+    <p class="smaller">(Aby zachować bezpieczeństwo w razie gdyby Twoje urządzenie buło zainfekowane, polecamy skorzystać z narzędzia <a href="https://pl.wikipedia.org/wiki/Live_CD" target='blank'><span class="b">live disc</span></a>) </p>
+  </div>
+</div>
+<div id="wait-div">
+   <div class="my-ui-widget-overlay"> </div>
+   <p> <span>Proszę poczekać...</span><span id="wait-more"><br />Może to chwilę zająć.</span> </p>
+</div>
+</div>
+<script type="text/javascript" >
+
+var results = [];
+function generate(n, callback) { // create Bitcoin addresses and private keys
+  $("#generate-button-div button").button("option", "disabled", true);
+  $("#wait-div").show();
+  if (n > 10)
+    $("#wait-more").show();
+  results = [];
+  if (window.Worker) { // use HTML5 Workers if available
+    var max_workers = 3; // 3 workers, optimal for 4-core processors
+    var workers = [];
+    for (var i = 0; i < max_workers; i++)
+      workers[i] = new Worker('js/worker.js');
+    for (var i = 0; i < max_workers; i++)
+      workers[i].onmessage = function(event) { // called from multiple threads
+        results.push(event.data);
+        if (results.length == n) {
+          $("#wait-more").hide();
+          $("#wait-div").hide();
+          callback();
+        }
+      };
+    for (var i = 0; i < n; i++)
+      workers[i % max_workers].postMessage(randomnessContainer.getNext32Bytes());
+  } 
+  else { // older browsers
+    calbackAfterRecursive = callback;
+    setTimeout("recursive(" + (n - 1) + ")", 100);
+  }
+}
+
+var calbackAfterRecursive;
+var recursive = function(i) { // recursive implementaion with 'sleep()' to give UI some respondness
+  var array32byte = randomnessContainer.getNext32Bytes();
+  results[i] = generateOneAddress(array32byte);
+  if (i != 0)
+    setTimeout("recursive(" + (i - 1) + ")", 2);
+  else {
+    $("#wait-more").hide();
+    $("#wait-div").hide();
+    calbackAfterRecursive();
+  }
+}
+
+function generateOneAddress(array32byte) {
+  var eckey = new Bitcoin.ECKey(array32byte);
+  var BTCaddress = eckey.getBitcoinAddress().toString();
+  var privateKeyWIF = new Bitcoin.Address(array32byte);
+  privateKeyWIF.version = 0x80;
+  BTCprivateKey = privateKeyWIF.toString();
+  var x = new Object();
+  x.address = BTCaddress;
+  x.key = BTCprivateKey;
+  return x;
+}
+
+/* few vars for bills rendering */
+var updateIndividualResults;
+var updateNotesResults;
+var cancelUpdateNotesResults = false;
+var cbi = 0; // current bill index
+var billImage = [];
+billImage[0] = new Image(); billImage[0].src = "img/bill-green.png";
+billImage[1] = new Image(); billImage[1].src = "img/bill-yellow.png";
+billImage[2] = new Image(); billImage[2].src = "img/bill-purple.png";
+billImage[3] = new Image(); billImage[3].src = "img/bill-gray.png";
+var bill = [];
+bill[0] = new Object();
+bill[0].className="type-green";
+bill[0].canvasHeight=364;
+bill[0].leftK=39;  bill[0].topK=76;  bill[0].fillK="#01431d"; bill[0].radiusK=0.3; bill[0].sizeK=144;
+bill[0].leftA=496; bill[0].topA=158; bill[0].fillA="#01431d"; bill[0].radiusA=0.3; bill[0].sizeA=120;
+bill[1] = new Object();
+bill[1].className="type-yellow";
+bill[1].canvasHeight=364;
+bill[1].leftK=501; bill[1].topK=143; bill[1].fillK="#000"; bill[1].radiusK=0; bill[1].sizeK=162;
+bill[1].leftA=27;  bill[1].topA=70;  bill[1].fillA="#000"; bill[1].radiusA=0; bill[1].sizeA=145;
+bill[2] = new Object();
+bill[2].className="type-purple";
+bill[2].canvasHeight=362;
+bill[2].leftK=543; bill[2].topK=195; bill[2].fillK="#be714d"; bill[2].radiusK=0; bill[2].sizeK=114;
+bill[2].leftA=56;  bill[2].topA=95;  bill[2].fillA="#814970"; bill[2].radiusA=0; bill[2].sizeA=114;
+bill[3] = new Object();
+bill[3].className="type-gray";
+bill[3].canvasHeight=296;
+bill[3].leftK=536; bill[3].topK=157; bill[3].fillK="#333"; bill[3].radiusK=0; bill[3].sizeK=111;
+bill[3].leftA=32;  bill[3].topA=26;  bill[3].fillA="#333"; bill[3].radiusA=0; bill[3].sizeA=111;
+
+$(function() { // UI related initialization and handlers
+  
+  $("#loader").remove();
+  $("#main-container").fadeIn(1000);
+
+  $("#button-set").buttonset();
+  $("#button-set button").click(function() {
+    // persist changes for user Bookmarking
+    window.location.replace("?n=" + $(this).text());
+  });
+
+  n = parseInt(getParameterByName("n"), 10);
+  if (isHandheldDevice()) {
+    $("#user-instruction").text("Dotknij, aby zapewnić losowość"); // change instruction
+    if (! n)
+      n = 1;
+  }
+  else if (n !== 1 && n !== 100 && n !== 1000)
+    n = 10;
+
+  currentSite = getParameterByName("site");
+  if (currentSite) {
+    $("#input-div").hide();
+    $(".main-right").hide();
+    if (currentSite == "about")
+      $("#site-about").show();
+  }
+  else {
+    $("#site-about").hide();
+  }
+  
+  randomnessContainer.setNumAddresses(n);
+  $("#button-" + n).button("disable").removeClass("not-selected").addClass("selected");
+
+  // init knob
+  var isKnobFull = false;
+  $("#knob").knob();
+  // progress
+  function randomnessProgress(val) {
+    if (val < 100)
+      $("#knob").val(val).trigger('change');
+    else {
+      $("#knob").val(100).trigger('change');
+      isKnobFull = true;
+      $("#randomness-p").css("color", "#186C9D");
+      $("#knob-div").hide("fade", {}, 800, function() {
+        $("#generate-button-div button").show("fade", {}, 800);
+      });
+    }
+  }
+  
+  // add-this option
+  $("#disabled-add-this-buttons").hide(); // hide option
+  $("#load-add-this").click(function(e) {
+    var addthisdata = ['<div id="add-this-buttons">',
+        '<div class="addthis_toolbox addthis_default_style addthis_32x32_style">',
+          '<a class="addthis_button_preferred_1"><\/a>',
+          '<a class="addthis_button_preferred_2"><\/a>',
+          '<a class="addthis_button_preferred_3"><\/a>',
+          '<a class="addthis_button_preferred_4"><\/a>',
+          '<a class="addthis_button_compact"><\/a>',
+        '<\/div>',
+        '<script type="text\/javascript" src="\/\/s7.addthis.com\/js\/300\/addthis_widget.js#pubid=ra-52d8f73d440c4cab"><\/script>',
+      '<\/div>'].join('\n');
+    $("#disabled-add-this-buttons").html(addthisdata);
+    e.preventDefault();
+  });
+  
+  var restartBillsRendering = function() {
+    cancelUpdateNotesResults = true;
+    $(".single-bill").remove();
+    try {
+      clearTimeout(notesRenderTimeout);
+    } catch(e) {}
+    updateNotesResults(0);
+  }
+  $("#bill-buttons span").buttonset();
+  $("#button-green").click(function(event) {
+    $(this).blur();
+    $("#bill-buttons .selected").removeClass("selected");
+    $(this).addClass("selected");
+    if (cbi != 0) {
+      cbi = 0;
+      restartBillsRendering();
+    }
+  });
+  $("#button-yellow").click(function(event) {
+    $(this).blur();
+    $("#bill-buttons .selected").removeClass("selected");
+    $(this).addClass("selected");
+    if (cbi != 1) {
+      cbi = 1;
+      restartBillsRendering();
+    }
+  });
+  $("#button-purple").click(function(event) {
+    $(this).blur();
+    $("#bill-buttons .selected").removeClass("selected");
+    $(this).addClass("selected");
+    if (cbi != 2) {
+      cbi = 2;
+      restartBillsRendering();
+    }
+  });
+  $("#button-gray").click(function(event) {
+    $(this).blur();
+    $("#bill-buttons .selected").removeClass("selected");
+    $(this).addClass("selected");
+    if (cbi != 3) {
+      cbi = 3;
+      restartBillsRendering();
+    }
+  });
+  getInitRandomness();
+  
+  // canvas stuff
+  var startedToDraw = false;
+  canvas = document.getElementById('mouse-canvas');
+  var jQCanvas = $("#mouse-canvas")
+  canvas.width = jQCanvas.width();
+  canvas.height = jQCanvas.height();
+  var offset = jQCanvas.offset();
+  var offsettime = new Date().getTime();
+  var canWidthCenter = parseInt(jQCanvas.width() / 2);
+  var canHeightCenter = parseInt(jQCanvas.height() / 2);
+  $(window).resize(function() { // on resize - update canvas
+    canvas.width = jQCanvas.width();
+    canvas.height = jQCanvas.height();
+    offset = jQCanvas.offset();
+    canWidthCenter = parseInt(jQCanvas.width() / 2);
+    canHeightCenter = parseInt(jQCanvas.height() / 2);
+  });
+  var context = canvas.getContext('2d');
+  var arrayX = [];
+  var arrayY = [];
+  var lastDrawTime = new Date().getTime();
+  var computePosition = function(value, maxI, center, i) {
+    i = (maxI - i) * (maxI - i);
+    maxI = maxI * maxI;
+    i = maxI - i;
+    return (i * value + (maxI - i) * center) / maxI;
+  };
+  var drawXY = function(x, y) {
+    // skip coordinates that are generated within short time (by fast browser) - they are probably too similar
+    if (new Date().getTime() - lastDrawTime < 40)
+      return;
+    if (x !== undefined)
+      arrayX[21] = x;
+    if (y !== undefined)
+      arrayY[21] = y;
+    randomnessContainer.addPointToRandomness(arrayX[1], arrayY[1], randomnessProgress);
+    arrayX.shift();
+    arrayY.shift();
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    var shrinkConst = 19
+    var maxCircle = 5;
+    for (var i = 0; i <= 20; i++) {
+      if (arrayX[i] === undefined || arrayY[i] === undefined)
+        continue;
+      context.beginPath();
+      if (isKnobFull == true) {
+        context.strokeStyle = '#186C9D';
+        context.fillStyle = '#186C9D';
+      }
+      if (i > shrinkConst) {
+        if (isKnobFull == false) {
+          context.strokeStyle = '#f69319';
+          context.fillStyle = '#f69319';
+        }
+        context.arc(arrayX[i], arrayY[i], maxCircle, 0, 2 * Math.PI, false);
+      } 
+      else {
+        context.strokeStyle = '#186C9D';
+        context.fillStyle = '#186C9D';
+        context.arc(computePosition(arrayX[i], shrinkConst, canWidthCenter, i), computePosition(arrayY[i], shrinkConst, canHeightCenter, i), i * maxCircle / shrinkConst, 0, 2 * Math.PI, false);
+      }
+      context.closePath();
+      context.fill();
+      context.stroke();
+    }
+    lastDrawTime = new Date().getTime();
+    if (arrayX.length !== 0)
+      setTimeout(drawXY, 50);
+  }
+  $(window).bind("unload", function() { randomnessProgress(0); }); // for bfcache
+  
+  $("#mouse-canvas").mousemove(function(e) { // mouse moved
+    if (new Date().getTime() - offsettime > 1000) { // update every sec
+      offset = jQCanvas.offset();
+      offsettime = new Date().getTime();
+    }
+    var x = e.pageX - offset.left;
+    var y = e.pageY - offset.top;
+    if (!startedToDraw) {
+      startedToDraw = true;
+      context.strokeStyle = '#186C9D';
+      context.fillStyle = '#186C9D';
+      context.lineWidth = 1;
+      context.moveTo(x, y);
+    } else {
+      drawXY(x, y);
+    }
+  });
+
+  $("#generate-button-div button").button();
+  $("#generate-button-div button").button("option", "disabled", false);
+  $("#generate-button-div button").hide();
+
+  $("#update-bulk").button();
+  $("#back-to-homepage").button().click(function() {
+    try { // can fail
+      window.location = "/";
+    } catch(e) {}
+    window.location.reload();
+  });
+  $(".site-back-button").button().click(function() {
+    if (n == 10)
+      window.location.href = "/";
+    else
+      window.location.href = "?n=" + n;
+  });
+  $("#print-button").button().click(function() {
+    window.print(); 
+  });
+  $("#about-button").button().click(function() {
+    if (n == 10)
+      window.location.href = "?site=about";
+    else
+      window.location.href = "?n=" + n + "&site=about";
+  });
+  $("#wait-more").hide();
+  $("#wait-div").hide();
+  $("#dialog-confirm").hide();
+  $("#tabs-results").tabs({event: "mouseover"});
+  $("#tabs-results").hide();
+  $("#update-bulk").click(function() {
+    $(this).blur();
+    updateBulkResults(results);
+  });
+
+  // update results
+  var updateBulkResults = function() {
+    var bulkFormat = $("#bulk-format-input").val();
+    var prefix = bulkFormat.substring(0, bulkFormat.indexOf("address"));
+    var middle = bulkFormat.substring(bulkFormat.indexOf("address") + 7, bulkFormat.indexOf("key"));
+    var suffix = bulkFormat.substring(bulkFormat.indexOf("key") + 3);
+    
+    var string = "\n";
+    for (var i = 0; i < n; i++) {
+      string += prefix + results[i].address + middle + results[i].key + suffix + "\n";
+    }
+    $("#results-textarea").val(string);
+    $("#results-textarea").attr('rows', n + 3);
+  }
+  
+  updateNotesResults = function(i) { // draw bills
+    // handling interrupt
+    if (i == 2 && cancelUpdateNotesResults == true)
+      cancelUpdateNotesResults = false;
+    if (i > 2 && cancelUpdateNotesResults == true) {
+      cancelUpdateNotesResults = false;
+      return;
+    }
+    var divBill = $("<div/>", {class: 'clearfix single-bill ' + bill[cbi].className});
+    var divBillInner = $("<div/>");
+    var divCanvas = $("<canvas class='bill-canvas' width='680' height='" + bill[cbi].canvasHeight + "'></canvas>");
+    divBillInner.append(divCanvas);
+    divBill.append(divBillInner);
+    $("#bills").append(divBill);
+    var billContext = divCanvas[0].getContext('2d');
+    billContext.drawImage(billImage[cbi], 0, 0);
+    divCanvas.qrcode({
+      render: 'canvas',ecLevel: 'H',left: bill[cbi].leftK,top: bill[cbi].topK,fill: bill[cbi].fillK,radius: bill[cbi].radiusK,
+      size: bill[cbi].sizeK,background: null,text: results[i].key,quiet: 1,
+    });
+    divCanvas.qrcode({
+      render: 'canvas',ecLevel: 'H',left: bill[cbi].leftA,top: bill[cbi].topA,fill: bill[cbi].fillA,radius: bill[cbi].radiusA,
+      size: bill[cbi].sizeA,background: null,text: results[i].address,quiet: 1,
+    });
+    if (cbi == 0 || cbi == 1) {
+      divBillInner.append("<p class='rotate key-desc'>Klucz prywatny</p>");
+      divBillInner.append("<p class='rotate address-desc'>Adres Bitcoin</p>");
+      divBillInner.append("<p class='rotate key-value'>" + results[i].key + "</p>");
+      divBillInner.append("<p class='rotate address-value'>" + results[i].address + "</p>");
+    } else if (cbi == 2) {
+      divBillInner.append("<p class='address-value'>" + results[i].address + "</p>");
+      divBillInner.append("<p class='rotate key-value'>" + results[i].key + "</p>");
+    } else if (cbi == 3) {
+      divBillInner.append("<p class='address-value'>" + results[i].address + "</p>");
+    }
+    if (i + 1 < n) // loop condition
+       notesRenderTimeout = setTimeout("updateNotesResults(" + (i + 1) + ")", 5); // recursive implementation of loop, to give UI some time for rendering
+  }
+  
+  updateIndividualResults = function(i) { // normal view
+    var divRow = $("<div/>", {class: 'clearfix'});
+    $("#individual-addresses").append(divRow);
+    $("#individual-addresses").append("<hr />");
+    
+    var divAddress = $("<div/></div>", {class: 'qr-code-address'});
+    divInnerAddress = $("<div class='clearfix'></div>")
+    divAddress.append(divInnerAddress);
+    divInnerAddress.qrcode({
+      render: 'canvas',ecLevel: 'H',left: 0,top: 0,fill: '#f69319',
+      size: 150,background: null,text: results[i].address,quiet: 1,
+    });
+    divInnerAddress.append("<div class='comment-on-qr-address'><ul class='remove-bottom'><li>Udostępniaj</li><li class='comment-no-top'><span>adres</span></li><li><span>publiczny</span></li><li>Zasil i weryfikuj</li><li class='remove-bottom'>Przyjmuj płatności</li></ul></div>");
+    divAddress.append("<input type='text' value='" + results[i].address + "' readonly='readonly' class='select-all-on-click'/>");
+    divRow.append(divAddress);
+    
+    var divKey = $("<div/>", {class: 'qr-code-key'});
+    divInnerKey = $("<div class='clearfix'></div>");
+    divKey.append(divInnerKey);
+    divInnerKey.qrcode({
+      render: 'canvas',ecLevel: 'H',left: 0,top: 0,fill: '#186C9D',
+      size: 150,background: null,text: results[i].key,quiet: 1,
+    });
+    divInnerKey.append("<div class='comment-on-qr-key'><ul class='remove-bottom'><li>Ukryj</li><li class='comment-no-top'><span>klucz</span></li><li><span>prywatny</span></li><li>Wydawaj i wypłacaj</li><li class='remove-bottom'>Płać innym</li></ul></div>");
+    divKey.append("<input type='text' value='" + results[i].key + "' readonly='readonly' class='select-all-on-click'/>");
+    divRow.append(divKey);
+    
+    if (i + 1 < n) // loop condition
+      setTimeout("updateIndividualResults(" + (i + 1) + ")", 5); // recursive implementation of loop, to give UI some time for rendering
+    else { // end
+      if (! isHandheldDevice()) {
+        $(".select-all-on-click").focus(function(event) {
+          $(this).select();
+          $(this).mouseup(function(e) {
+            $(this).unbind("mouseup");
+            return false;
+          });
+        });
+      }
+    }
+  }
+  
+  var showResults = function() {
+    if (results.length != n)
+      throw "results.length != n";
+    
+    $("#input-div").fadeOut(500, function() {
+      $("#tabs-results").fadeIn();
+    });
+    $(".main-right").fadeOut(500);
+    
+    if (n > 100) { // two tabs are disabled for 1000
+      $("#tabs-results").tabs("option", "active", 2); // allow only bulk
+      $("#tabs-results").tabs({disabled: [0, 1]});
+    } else {
+      // Update UI. It might take some time to calculate QR codes.
+      updateNotesResults(0);
+      updateIndividualResults(0);
+    }
+    updateBulkResults();
+  }
+  
+  $("#generate-button-div button").click(function() {
+    $("#generate-button-div button").blur(); // unfocus clicked button
+    $("#disabled-add-this-buttons").remove();
+    testIsOnline(function(isTrue) {
+      // open confirm dialog
+      if (isTrue) {
+        $("#dialog-confirm").dialog({
+          resizable: false,
+          width: 620,
+          modal: true,
+          open: function(event, ui) {
+            $('.ui-dialog :button').focus(); // select Cancel as default
+          },
+          buttons: {
+            "Continue anyway": function() {
+              $(this).dialog("close");
+              generate(n, showResults);
+            },
+            Cancel: function() {
+              $(this).dialog("close");
+            },
+          }
+        });
+      } 
+      else {
+        generate(n, showResults);
+      }
+    });
+  });
+  
+  try {
+    if (window.applicationCache) {
+      window.applicationCache.addEventListener('updateready', function(e) {
+        try {
+          if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+            // Browser downloaded new cache,  swap it in and reload the page.
+            window.applicationCache.swapCache();
+            window.location.reload(); 
+          } else {
+            // Manifest didn't changed. Nothing to server.
+          }
+        } catch(e) {}
+      }, false);
+    }
+  } catch(e) {}
+});
+
+var randomnessContainer = new function() {
+  this.array = [];
+  this.numAddresses;
+  this.neededLength;
+  this.length = 0;
+  this.position = 0;
+  this.setNumAddresses = function(num) {
+    this.numAddresses = num;
+    this.neededLength = num * 32;
+    if (num == 1 && ! isHandheldDevice())
+      this.neededLength += 32;
+  }
+  this.addPointToRandomness = function(x, y, progressCallback) {
+    if (x === undefined || y === undefined)
+      return;
+    if (this.isFull())
+      return; 
+    this.array[this.position++] ^= x & 0xff;
+    if (this.position == this.neededLength)
+      this.position = 0;
+    this.array[this.position++] ^= y & 0xff;
+    if (this.position == this.neededLength)
+      this.position = 0;
+    this.length += 2;
+    progressCallback((this.length * 100) / this.neededLength);
+  };
+  this.addInitRandomness = function(p) {
+    this.position = (p.timeMillis % this.numAddresses) * 32;
+    for (var i = 0; i < this.neededLength; i++) {
+      this.array[i] = p.rnd & 0xff;
+      p.rnd = nextRnd(p.rnd);
+    }
+  };
+  this.isFull = function() {
+    return this.length >= this.neededLength;
+  };
+  this.cursor = 0;
+  this.getNext32Bytes = function() {
+    var retArray = [];
+    for (var i = 0; i < 32; i++) {
+      retArray[i] = this.array[this.cursor++];
+      if (this.cursor == this.neededLength)
+        this.cursor = 0;
+    }
+    return retArray;
+  };
+};
+
+function getParameterByName(name) {
+  name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+  var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), 
+  results = regex.exec(location.search);
+  return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+function getInitRandomness() {
+  // if user's mouse movements are not random enough
+  $.ajax({
+    url: "getinitrandomness",
+    timeout: 5000,
+    success: function(p) {
+      randomnessContainer.addInitRandomness(p);
+      initOnlineVersion();
+    },
+    dataType: "json"
+  });
+}
+
+function initOnlineVersion() {
+  $("#disabled-add-this-buttons").show();
+}
+
+function testIsOnline(callback) {
+  $.ajax({
+    url: "amionline",
+    timeout: 2000, // wait up to 2 sec for connection test
+    success: function(p) {
+      $("#wait-div").hide();
+      callback(true);
+    },
+    error: function(e) {
+      $("#wait-div").hide();
+      callback(false);
+    },
+    beforeSend: function() {
+      $("#wait-div").show();
+    },
+    dataType: "json"
+  });
+}
+
+function isHandheldDevice() { // detect handheld device
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+  
+</script>
+
+</body>
+</html>

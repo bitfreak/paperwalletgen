@@ -8,6 +8,9 @@ PaperWalletGen jest generatorem portfeli/adresów bitcoin typu offline z naciski
 * Łatwość użytkowania
 * Estetykę
 
+Wersja live dostępna pod adresem http://bitcoiny.pl/
+
+GitHub URL: https://github.com/bitfreak/paperwalletgen/
  
 ### Copyrights
 
